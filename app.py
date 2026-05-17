@@ -58,8 +58,8 @@ api_key = st.text_input("Insira sua Gemini API Key:", type="password")
 
 st.write("---")
 
-# 2. SEÇÃO DA CALCULADORA
-st.subheader("📊 Calculadora de Custos (R$)")
+# 2. SEÇÃO DA CALCULADORA MANUAL (Mantida para simulações adicionais)
+st.subheader("📊 Calculadora de Custos Manual (R$)")
 
 col1, col2, col3 = st.columns(3)
 
@@ -75,14 +75,14 @@ custo_total = valor_produto + valor_frete + valor_taxa
 if custo_total > 0:
     st.markdown(f"""
         <div style="background-color: #1e293b; padding: 15px; border-radius: 8px; border-left: 5px solid #e63946; margin: 15px 0;">
-            <p style="margin:0; font-size:12px; color:#94a3b8 !important;">CUSTO TOTAL ESTIMADO:</p>
+            <p style="margin:0; font-size:12px; color:#94a3b8 !important;">CUSTO TOTAL ESTIMADO (MANUAL):</p>
             <h2 style="margin:0; color:#e63946 !important;">R$ {custo_total:.2f}</h2>
         </div>
     """, unsafe_allow_html=True)
 
 st.write("---")
 
-# 3. SEÇÃO DO PRINT E DA IA
+# 3. SEÇÃO DO PRINT E DA IA COM CONVERSÃO AUTOMÁTICA
 st.subheader("🔍 Análise de Viabilidade")
 arquivo_image = st.file_uploader("Escolha o print do anúncio:", type=["jpg", "jpeg", "png"])
 
@@ -90,14 +90,18 @@ if arquivo_image:
     imagem = Image.open(arquivo_image)
     st.image(imagem, caption="Imagem carregada para análise", use_container_width=True)
 
-# VEJA AQUI: Adicionei a ordem explícita para ler os dados do vendedor no canto esquerdo!
+# Turbinando as instruções da IA para caçar os Yuans e converter para Real!
 instrucoes = """
-Você é um assistente especialista em analisar prints de anúncios de produtos (especialmente de plataformas chinesas de usados).
-Olhe atentamente para a imagem e retorne em português:
-1. O nome do produto, especificações (como armazenamento/GB) e a marca.
-2. O preço exibido em Yuans (¥) e detalhes do anúncio.
-3. INFORMAÇÕES DO VENDEDOR: Olhe no canto superior esquerdo de cada card de anúncio. Extraia dados sobre o vendedor, como o selo/reputação exibido ao lado do avatar dele, tags de verificação e há quanto tempo o anúncio foi postado (ex: últimas 72 horas).
-4. Veredito final: Se o anúncio e o perfil do vendedor parecem confiáveis ou se há pontos importantes de atenção.
+Você é um assistente especialista em analisar prints de anúncios de produtos (especialmente de plataformas chinesas de usados como Xianyu).
+Olhe atentamente para a imagem e retorne a resposta formatada estritamente em português:
+
+1. DETALHES DO PRODUTO: O nome do produto, marca e especificações encontradas (ex: se é de 64GB, 128GB, 256GB).
+2. 💰 VALORES E CONVERSÃO (FAÇA O CÁLCULO): 
+   - Identifique o valor do produto exposto em Yuans (¥).
+   - Converta esse valor automaticamente para Real Brasileiro (R$) usando uma taxa estimada de R$ 0,80 por Yuan (Multiplique o valor em Yuan por 0.80).
+   - Mostre claramente o valor original em Yuan e o valor convertido para Real na resposta (Exemplo: "Valor do Produto: ¥560 (Aprox. R$ 448,00)").
+3. INFORMAÇÕES DO VENDEDOR: Olhe no canto superior esquerdo do card do anúncio. Extraia a reputação do vendedor, selos de verificação e há quanto tempo o anúncio foi postado (ex: postado nas últimas 72 horas).
+4. VEREDITO FINAL: Diga se com base no preço e no perfil do vendedor o anúncio parece seguro ou se há pontos vermelhos de atenção.
 """
 
 if st.button("Analisar Imagem"):
@@ -106,7 +110,7 @@ if st.button("Analisar Imagem"):
     elif not arquivo_image:
         st.error("Suba uma imagem primeiro!")
     else:
-        with st.spinner("Conectando com o servidor de importação..."):
+        with st.spinner("Conectando com o servidor de importação e convertendo valores..."):
             try:
                 chave_limpa = api_key.strip()
                 bytes_data = arquivo_image.getvalue()
@@ -138,10 +142,10 @@ if st.button("Analisar Imagem"):
                 if response.status_code == 200:
                     try:
                         texto_analise = response_data['candidates'][0]['content']['parts'][0]['text']
-                        st.success("Análise de Importação Concluída!")
+                        st.success("Análise de Importação Concluída com Sucesso!")
                         st.write(texto_analise)
                     except KeyError:
-                        st.error("Erro na leitura dos dados. Tente novamente.")
+                        st.error("Erro na leitura dos dados da imagem. Tente novamente.")
                 else:
                     mensagem_erro = response_data.get('error', {}).get('message', 'Erro desconhecido')
                     st.error(f"Erro: {mensagem_erro}")
