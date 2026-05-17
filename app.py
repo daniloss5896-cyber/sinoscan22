@@ -48,7 +48,7 @@ st.markdown("""
 # 📱 CONTEÚDO DO APLICATIVO
 # ==========================================
 
-st.title("🔍 Meu Analisador de Anúncios")
+st.title("🔍 Meu Analisador de Anúncios 🇨🇳 ")
 st.write("Faça o upload do print do anúncio para analisar os detalhes.")
 
 api_key = st.text_input("Insira sua Gemini API Key:", type="password")
