@@ -41,11 +41,9 @@ if st.button("Analisar Imagem"):
                 mime_type = arquivo_image.type
 
                 # URL corrigida usando a rota oficial do modelo de produção v1
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
-
+                url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={api_key}"
                 
                 headers = {'Content-Type': 'application/json'}
-
                 
                 # Estrutura padrão estrita da API do Gemini para texto e imagem juntos
                 payload = {
