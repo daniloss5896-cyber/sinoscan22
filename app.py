@@ -37,10 +37,10 @@ if st.button("Analisar Imagem"):
                 # Configura a chave de acesso
                 genai.configure(api_key=api_key)
                 
-                # Cria o modelo usando o método clássico aceito pela biblioteca antiga
-                model = genai.GenerativeModel('gemini-1.5-flash')
+                # Usa o modelo com o sufixo 'latest' que a v1beta aceita
+                model = genai.GenerativeModel('gemini-1.5-flash-latest')
                 
-                # Envia os dados usando a estrutura padrão
+                # Envia os dados
                 resposta = model.generate_content([instrucoes, imagem])
                 st.success("Análise Concluída!")
                 st.write(resposta.text)
