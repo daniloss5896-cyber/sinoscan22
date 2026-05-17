@@ -44,7 +44,7 @@ if st.button("Analisar Imagem"):
                 mime_type = arquivo_image.type
 
                 # URL oficial e imutável para o modelo estável v1
-                url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={chave_limpa}"
+                url = f"https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key={chave_limpa}"
                 
                 headers = {'Content-Type': 'application/json'}
                 
