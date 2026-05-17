@@ -34,14 +34,14 @@ if st.button("Analisar Imagem"):
     else:
         with st.spinner("Analisando..."):
             try:
-                # CORREÇÃO CRÍTICA: Força a API a usar a versão correta (v1) para aceitar o Flash
-                client = genai.Client(api_key=api_key, http_options={'api_version': 'v1'})
+                # Configura a chave de acesso
+                genai.configure(api_key=api_key)
                 
-                # Envia os dados para o modelo atualizado
-                resposta = client.models.generate_content(
-                    model='gemini-1.5-flash',
-                    contents=[instrucoes, imagem]
-                )
+                # Cria o modelo usando o método clássico aceito pela biblioteca antiga
+                model = genai.GenerativeModel('gemini-1.5-flash')
+                
+                # Envia os dados usando a estrutura padrão
+                resposta = model.generate_content([instrucoes, imagem])
                 st.success("Análise Concluída!")
                 st.write(resposta.text)
             except Exception as e:
