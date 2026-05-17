@@ -42,7 +42,8 @@ if st.button("Analisar Imagem"):
                 mime_type = arquivo_image.type
 
                 # Monta a URL de conexão direta com a API oficial e moderna do Gemini (v1)
-                url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={api_key}"
+                url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key={api_key}"
+
                 
                 # Configura o cabeçalho padrão da internet
                 headers = {'Content-Type': 'application/json'}
