@@ -1,6 +1,8 @@
 import streamlit as st
-import google.generativeai as genai
+import requests
+import base64
 from PIL import Image
+import io
 
 # 1. Configura o visual da página do seu app
 st.title("🔍 Meu Analisador de Anúncios")
@@ -25,31 +27,56 @@ Olhe para a imagem e retorne:
 3. Se o anúncio parece confiável ou se há pontos de atenção.
 """
 
-# 5. Botão que aciona a Inteligência Artificial
+# 5. Botão que aciona a Inteligência Artificial via Requisição Direta
 if st.button("Analisar Imagem"):
     if not api_key:
         st.error("Insira a sua API Key primeiro!")
     elif not arquivo_image:
         st.error("Suba uma imagem primeiro!")
     else:
-        with st.spinner("Analisando..."):
+        with st.spinner("Analisando diretamente nos servidores do Google..."):
             try:
-                # Configura a chave de acesso no pacote antigo
-                genai.configure(api_key=api_key)
+                # Converte a imagem carregada para bytes e depois para Base64 (formato seguro para envio)
+                bytes_data = arquivo_image.getvalue()
+                base64_image = base64.b64encode(bytes_data).decode('utf-8')
+                mime_type = arquivo_image.type
+
+                # Monta a URL de conexão direta com a API oficial e moderna do Gemini (v1)
+                url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={api_key}"
                 
-                # Força o uso do modelo de visão clássico da biblioteca antiga
-                model = genai.GenerativeModel('gemini-pro-vision')
+                # Configura o cabeçalho padrão da internet
+                headers = {'Content-Type': 'application/json'}
                 
-                # Envia os dados no formato que o servidor antigo entende
-                resposta = model.generate_content([instrucoes, imagem])
-                st.success("Análise Concluída!")
-                st.write(resposta.text)
+                # Monta os dados com as instruções e a imagem em Base64
+                payload = {
+                    "contents": [{
+                        "parts": [
+                            {"text": instrucoes},
+                            {
+                                "inlineData": {
+                                    "mimeType": mime_type,
+                                    "data": base64_image
+                                }
+                            }
+                        ]
+                    }]
+                }
+                
+                # Faz o envio direto para o Google
+                response = requests.post(url, headers=headers, json=payload)
+                response_data = response.json()
+                
+                # Verifica se o Google respondeu com sucesso
+                if response.status_code == 200:
+                    try:
+                        texto_analise = response_data['candidates'][0]['content']['parts'][0]['text']
+                        st.success("Análise Concluída com Sucesso!")
+                        st.write(texto_analise)
+                    except KeyError:
+                        st.error("A IA respondeu, mas o formato veio inesperado. Tente novamente.")
+                else:
+                    mensagem_erro = response_data.get('error', {}).get('message', 'Erro desconhecido')
+                    st.error(f"Erro no servidor do Google: {mensagem_erro}")
+                    
             except Exception as e:
-                # Se o modelo antigo reclamar, tentamos o plano B automático
-                try:
-                    model_flash = genai.GenerativeModel('gemini-1.5-flash')
-                    resposta = model_flash.generate_content([instrucoes, imagem])
-                    st.success("Análise Concluída!")
-                    st.write(resposta.text)
-                except Exception as erro_b:
-                    st.error(f"Erro ao chamar a IA: {e} | Plano B: {erro_b}")
+                st.error(f"Erro na conexão direta: {e}")
