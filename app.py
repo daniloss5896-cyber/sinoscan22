@@ -1,6 +1,5 @@
 import streamlit as st
-import requests
-import base64
+import google.generativeai as genai
 from PIL import Image
 
 # 1. Configura o visual da página do seu app
@@ -26,54 +25,38 @@ Olhe para a imagem e retorne:
 3. Se o anúncio parece confiável ou se há pontos de atenção.
 """
 
-# 5. Botão que aciona a Inteligência Artificial via Requisição Direta
+# 5. Botão que aciona a Inteligência Artificial
 if st.button("Analisar Imagem"):
     if not api_key:
         st.error("Insira a sua API Key primeiro!")
     elif not arquivo_image:
         st.error("Suba uma imagem primeiro!")
     else:
-        with st.spinner("Analisando diretamente nos servidores do Google..."):
+        with st.spinner("Analisando com o motor do Gemini..."):
             try:
-                # Converte a imagem carregada para bytes e depois para Base64
-                bytes_data = arquivo_image.getvalue()
-                base64_image = base64.b64encode(bytes_data).decode('utf-8')
-                mime_type = arquivo_image.type
-
-                # URL corrigida usando a rota oficial do modelo de produção v1
-                url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={api_key}"
+                # 1. Configura a chave de acesso usando o cliente moderno do pacote instalado
+                genai.configure(api_key=api_key)
                 
-                headers = {'Content-Type': 'application/json'}
+                # 2. Força o uso do modelo estável de produção
+                model = genai.GenerativeModel("gemini-1.5-flash")
                 
-                # Estrutura padrão estrita da API do Gemini para texto e imagem juntos
-                payload = {
-                    "contents": [{
-                        "parts": [
-                            {"text": instrucoes},
-                            {
-                                "inlineData": {
-                                    "mimeType": mime_type,
-                                    "data": base64_image
-                                }
-                            }
-                        ]
-                    }]
-                }
+                # 3. Faz a chamada passando o texto e a imagem em formato PIL diretamente
+                resposta = model.generate_content([instrucoes, imagem])
                 
-                # Faz o envio direto
-                response = requests.post(url, headers=headers, json=payload)
-                response_data = response.json()
-                
-                if response.status_code == 200:
-                    try:
-                        texto_analise = response_data['candidates'][0]['content']['parts'][0]['text']
-                        st.success("Análise Concluída com Sucesso!")
-                        st.write(texto_analise)
-                    except KeyError:
-                        st.error("O Google respondeu, mas os dados vieram em um formato confuso. Tente salvar a foto novamente.")
+                if resposta.text:
+                    st.success("Análise Concluída com Sucesso!")
+                    st.write(resposta.text)
                 else:
-                    mensagem_erro = response_data.get('error', {}).get('message', 'Erro desconhecido')
-                    st.error(f"Erro no servidor do Google: {mensagem_erro}")
+                    st.warning("A IA processou, mas não gerou texto. Tente novamente.")
                     
             except Exception as e:
-                st.error(f"Erro na conexão direta: {e}")
+                # PLANO B DE EMERGÊNCIA: Se a biblioteca principal der ruim, usamos o modelo antigo de fallback
+                try:
+                    model_backup = genai.GenerativeModel("gemini-pro-vision")
+                    resposta_backup = model_backup.generate_content([instrucoes, imagem])
+                    st.success("Análise Concluída pelo Modo de Segurança!")
+                    st.write(resposta_backup.text)
+                except Exception as erro_b:
+                    st.error(f"Erro no motor principal: {e}")
+                    st.error(f"Erro no motor de segurança: {erro_b}")
+                    st.info("Dica: Verifique se sua API Key foi copiada corretamente e não possui espaços.")
