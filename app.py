@@ -36,7 +36,8 @@ if st.button("Analisar Imagem"):
             try:
                 # Conecta com o modelo de visão do Gemini (Flash)
                 genai.configure(api_key=api_key)
-                model = genai.GenerativeModel('gemini-1.5-flash')
+                model = genai.GenerativeModel('model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
+')
                 
                 # Envia a foto junto com as instrucoes e mostra o resultado na tela
                 resposta = model.generate_content([instrucoes, imagem])
