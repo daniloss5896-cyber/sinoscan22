@@ -8,7 +8,6 @@ from PIL import Image
 # ==========================================
 st.set_page_config(page_title="SinoScan", page_icon="🇨🇳", layout="centered")
 
-# Injeta o visual focado em tons de vermelho e escuro
 st.markdown("""
     <style>
     /* Fundo principal do app */
@@ -59,10 +58,9 @@ api_key = st.text_input("Insira sua Gemini API Key:", type="password")
 
 st.write("---")
 
-# 2. SEÇÃO DA CALCULADORA (Novidade integrada de forma limpa)
+# 2. SEÇÃO DA CALCULADORA
 st.subheader("📊 Calculadora de Custos (R$)")
 
-# Cria três colunas para os números ficarem lado a lado no celular
 col1, col2, col3 = st.columns(3)
 
 with col1:
@@ -74,7 +72,6 @@ with col3:
 
 custo_total = valor_produto + valor_frete + valor_taxa
 
-# Mostra o painel com o resultado se o usuário digitar algum valor
 if custo_total > 0:
     st.markdown(f"""
         <div style="background-color: #1e293b; padding: 15px; border-radius: 8px; border-left: 5px solid #e63946; margin: 15px 0;">
@@ -85,7 +82,7 @@ if custo_total > 0:
 
 st.write("---")
 
-# 3. SEÇÃO DO PRINT E DA IA (Igualzinha ao código antigo)
+# 3. SEÇÃO DO PRINT E DA IA
 st.subheader("🔍 Análise de Viabilidade")
 arquivo_image = st.file_uploader("Escolha o print do anúncio:", type=["jpg", "jpeg", "png"])
 
@@ -93,12 +90,14 @@ if arquivo_image:
     imagem = Image.open(arquivo_image)
     st.image(imagem, caption="Imagem carregada para análise", use_container_width=True)
 
+# VEJA AQUI: Adicionei a ordem explícita para ler os dados do vendedor no canto esquerdo!
 instrucoes = """
-Você é um assistente especialista em analisar prints de anúncios de produtos (especialmente de sites chineses).
-Olhe para a imagem e retorne:
-1. O nome do produto e a marca.
-2. O preço estimado.
-3. Se o anúncio parece confiável ou se há pontos de atenção.
+Você é um assistente especialista em analisar prints de anúncios de produtos (especialmente de plataformas chinesas de usados).
+Olhe atentamente para a imagem e retorne em português:
+1. O nome do produto, especificações (como armazenamento/GB) e a marca.
+2. O preço exibido em Yuans (¥) e detalhes do anúncio.
+3. INFORMAÇÕES DO VENDEDOR: Olhe no canto superior esquerdo de cada card de anúncio. Extraia dados sobre o vendedor, como o selo/reputação exibido ao lado do avatar dele, tags de verificação e há quanto tempo o anúncio foi postado (ex: últimas 72 horas).
+4. Veredito final: Se o anúncio e o perfil do vendedor parecem confiáveis ou se há pontos importantes de atenção.
 """
 
 if st.button("Analisar Imagem"):
@@ -114,7 +113,6 @@ if st.button("Analisar Imagem"):
                 base64_image = base64.b64encode(bytes_data).decode('utf-8')
                 mime_type = arquivo_image.type
 
-                # O MESMO MODELO E ENDEREÇO QUE FUNCIONOU PERFEITAMENTE
                 url = f"https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key={chave_limpa}"
                 headers = {'Content-Type': 'application/json'}
                 
