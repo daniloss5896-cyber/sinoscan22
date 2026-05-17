@@ -3,21 +3,61 @@ import requests
 import base64
 from PIL import Image
 
-# 1. Configura o visual da página do seu app
+# ==========================================
+# 🎨 DESIGN COMPACTO E CLEAN (ROXO NEON)
+# ==========================================
+st.set_page_config(page_title="SinoScan", page_icon="🔍", layout="centered")
+
+# Injeta o visual escuro e moderno direto na tela
+st.markdown("""
+    <style>
+    /* Fundo principal do app */
+    .stApp {
+        background-color: #0b0f19 !important;
+    }
+    /* Cor de todos os textos */
+    h1, p, label, .stMarkdown {
+        color: #f8fafc !important;
+    }
+    /* Estilização do Botão Analisar */
+    div.stButton > button:first-child {
+        background-color: #a855f7 !important;
+        color: white !important;
+        border: none !important;
+        padding: 12px 24px !important;
+        border-radius: 8px !important;
+        font-weight: bold !important;
+        width: 100% !important;
+        box-shadow: 0px 4px 15px rgba(168, 85, 247, 0.4) !important;
+    }
+    /* Efeito ao passar o dedo/clicar no botão */
+    div.stButton > button:first-child:hover {
+        background-color: #9333ea !important;
+    }
+    /* Caixa de Upload e Inputs mais cleans */
+    .stTextInput>div>div>input, .stFileUploader {
+        background-color: #1e293b !important;
+        color: white !important;
+        border: 1px solid #334155 !important;
+        border-radius: 8px !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# ==========================================
+# 📱 CONTEÚDO DO APLICATIVO
+# ==========================================
+
 st.title("🔍 Meu Analisador de Anúncios")
 st.write("Faça o upload do print do anúncio para analisar os detalhes.")
 
-# 2. Campo para colar a chave de acesso da IA
 api_key = st.text_input("Insira sua Gemini API Key:", type="password")
-
-# 3. Campo para subir a foto ou print do celular
 arquivo_image = st.file_uploader("Escolha o print do anúncio:", type=["jpg", "jpeg", "png"])
 
 if arquivo_image:
     imagem = Image.open(arquivo_image)
     st.image(imagem, caption="Imagem carregada", use_container_width=True)
 
-# 4. As instruções secretas que a IA vai seguir ao ler a foto
 instrucoes = """
 Você é um assistente especialista em analisar prints de anúncios de produtos.
 Olhe para a imagem e retorne:
@@ -26,7 +66,6 @@ Olhe para a imagem e retorne:
 3. Se o anúncio parece confiável ou se há pontos de atenção.
 """
 
-# 5. Botão que aciona a Inteligência Artificial via Requisição Direta
 if st.button("Analisar Imagem"):
     if not api_key:
         st.error("Insira a sua API Key primeiro!")
@@ -35,27 +74,19 @@ if st.button("Analisar Imagem"):
     else:
         with st.spinner("Analisando diretamente nos servidores do Google..."):
             try:
-                # Remove espaços bobos que o celular pode ter colocado na chave
                 chave_limpa = api_key.strip()
-
-                # Converte a imagem carregada para bytes e depois para Base64
                 bytes_data = arquivo_image.getvalue()
                 base64_image = base64.b64encode(bytes_data).decode('utf-8')
                 mime_type = arquivo_image.type
 
-                # URL oficial e imutável para o modelo estável v1
                 url = f"https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key={chave_limpa}"
-                
                 headers = {'Content-Type': 'application/json'}
                 
-                # A ESTRUTURA EXATA QUE O GOOGLE EXIGE NA API V1
                 payload = {
                     "contents": [
                         {
                             "parts": [
-                                {
-                                    "text": instrucoes
-                                },
+                                {"text": instrucoes},
                                 {
                                     "inlineData": {
                                         "mimeType": mime_type,
@@ -67,7 +98,6 @@ if st.button("Analisar Imagem"):
                     ]
                 }
                 
-                # Faz o envio direto pulando qualquer biblioteca do Streamlit
                 response = requests.post(url, headers=headers, json=payload)
                 response_data = response.json()
                 
