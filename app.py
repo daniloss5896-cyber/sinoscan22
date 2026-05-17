@@ -1,5 +1,6 @@
 import streamlit as st
-import google.generativeai as genai
+import requests
+import base64
 from PIL import Image
 
 # 1. Configura o visual da página do seu app
@@ -25,30 +26,61 @@ Olhe para a imagem e retorne:
 3. Se o anúncio parece confiável ou se há pontos de atenção.
 """
 
-# 5. Botão que aciona a Inteligência Artificial
+# 5. Botão que aciona a Inteligência Artificial via Requisição Direta
 if st.button("Analisar Imagem"):
     if not api_key:
         st.error("Insira a sua API Key primeiro!")
     elif not arquivo_image:
         st.error("Suba uma imagem primeiro!")
     else:
-        with st.spinner("Analisando..."):
+        with st.spinner("Analisando diretamente nos servidores do Google..."):
             try:
-                # Configura a chave de acesso
-                genai.configure(api_key=api_key)
+                # Remove espaços bobos que o celular pode ter colocado na chave
+                chave_limpa = api_key.strip()
+
+                # Converte a imagem carregada para bytes e depois para Base64
+                bytes_data = arquivo_image.getvalue()
+                base64_image = base64.b64encode(bytes_data).decode('utf-8')
+                mime_type = arquivo_image.type
+
+                # URL oficial e imutável para o modelo estável v1
+                url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={chave_limpa}"
                 
-                # Usando a chamada direta simplificada que funciona em qualquer versão do SDK
-                model = genai.GenerativeModel('gemini-1.5-flash')
+                headers = {'Content-Type': 'application/json'}
                 
-                # Envia o prompt e a imagem juntos
-                resposta = model.generate_content([instrucoes, imagem])
+                # A ESTRUTURA EXATA QUE O GOOGLE EXIGE NA API V1
+                payload = {
+                    "contents": [
+                        {
+                            "parts": [
+                                {
+                                    "text": instrucoes
+                                },
+                                {
+                                    "inlineData": {
+                                        "mimeType": mime_type,
+                                        "data": base64_image
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
                 
-                if resposta.text:
-                    st.success("Análise Concluída com Sucesso!")
-                    st.write(resposta.text)
+                # Faz o envio direto pulando qualquer biblioteca do Streamlit
+                response = requests.post(url, headers=headers, json=payload)
+                response_data = response.json()
+                
+                if response.status_code == 200:
+                    try:
+                        texto_analise = response_data['candidates'][0]['content']['parts'][0]['text']
+                        st.success("Análise Concluída com Sucesso!")
+                        st.write(texto_analise)
+                    except KeyError:
+                        st.error("O Google respondeu, mas os dados vieram bagunçados. Tente enviar a imagem novamente.")
                 else:
-                    st.warning("O modelo não retornou texto. Tente novamente.")
+                    mensagem_erro = response_data.get('error', {}).get('message', 'Erro desconhecido')
+                    st.error(f"Erro vindo direto do Google: {mensagem_erro}")
                     
             except Exception as e:
-                st.error(f"Erro no processamento: {e}")
-                st.info("Dica: Verifique se sua API Key foi gerada recentemente e não possui espaços.")
+                st.error(f"Erro na conexão direta: {e}")
