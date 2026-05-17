@@ -2,7 +2,6 @@ import streamlit as st
 import requests
 import base64
 from PIL import Image
-import io
 
 # 1. Configura o visual da página do seu app
 st.title("🔍 Meu Analisador de Anúncios")
@@ -36,19 +35,17 @@ if st.button("Analisar Imagem"):
     else:
         with st.spinner("Analisando diretamente nos servidores do Google..."):
             try:
-                # Converte a imagem carregada para bytes e depois para Base64 (formato seguro para envio)
+                # Converte a imagem carregada para bytes e depois para Base64
                 bytes_data = arquivo_image.getvalue()
                 base64_image = base64.b64encode(bytes_data).decode('utf-8')
                 mime_type = arquivo_image.type
 
-                # Monta a URL de conexão direta com a API oficial e moderna do Gemini (v1)
-                url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key={api_key}"
-
+                # URL corrigida usando a rota oficial do modelo de produção v1
+                url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={api_key}"
                 
-                # Configura o cabeçalho padrão da internet
                 headers = {'Content-Type': 'application/json'}
                 
-                # Monta os dados com as instruções e a imagem em Base64
+                # Estrutura padrão estrita da API do Gemini para texto e imagem juntos
                 payload = {
                     "contents": [{
                         "parts": [
@@ -63,18 +60,17 @@ if st.button("Analisar Imagem"):
                     }]
                 }
                 
-                # Faz o envio direto para o Google
+                # Faz o envio direto
                 response = requests.post(url, headers=headers, json=payload)
                 response_data = response.json()
                 
-                # Verifica se o Google respondeu com sucesso
                 if response.status_code == 200:
                     try:
                         texto_analise = response_data['candidates'][0]['content']['parts'][0]['text']
                         st.success("Análise Concluída com Sucesso!")
                         st.write(texto_analise)
                     except KeyError:
-                        st.error("A IA respondeu, mas o formato veio inesperado. Tente novamente.")
+                        st.error("O Google respondeu, mas os dados vieram em um formato confuso. Tente salvar a foto novamente.")
                 else:
                     mensagem_erro = response_data.get('error', {}).get('message', 'Erro desconhecido')
                     st.error(f"Erro no servidor do Google: {mensagem_erro}")
