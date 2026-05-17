@@ -34,15 +34,22 @@ if st.button("Analisar Imagem"):
     else:
         with st.spinner("Analisando..."):
             try:
-                # Configura a chave de acesso
+                # Configura a chave de acesso no pacote antigo
                 genai.configure(api_key=api_key)
                 
-                # Usa o modelo com o sufixo 'latest' que a v1beta aceita
-                model = genai.GenerativeModel('gemini-1.5-flash-latest')
+                # Força o uso do modelo de visão clássico da biblioteca antiga
+                model = genai.GenerativeModel('gemini-pro-vision')
                 
-                # Envia os dados
+                # Envia os dados no formato que o servidor antigo entende
                 resposta = model.generate_content([instrucoes, imagem])
                 st.success("Análise Concluída!")
                 st.write(resposta.text)
             except Exception as e:
-                st.error(f"Erro ao chamar a IA: {e}")
+                # Se o modelo antigo reclamar, tentamos o plano B automático
+                try:
+                    model_flash = genai.GenerativeModel('gemini-1.5-flash')
+                    resposta = model_flash.generate_content([instrucoes, imagem])
+                    st.success("Análise Concluída!")
+                    st.write(resposta.text)
+                except Exception as erro_b:
+                    st.error(f"Erro ao chamar a IA: {e} | Plano B: {erro_b}")
