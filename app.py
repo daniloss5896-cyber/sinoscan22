@@ -32,12 +32,12 @@ if st.button("Analisar Imagem"):
     elif not arquivo_imagem:
         st.error("Suba uma imagem primeiro!")
     else:
-        with st.spinner("Analisando..."):
+                with st.spinner("Analisando..."):
             # Conecta com o modelo de visão do Gemini (Flash)
             genai.configure(api_key=api_key)
             model = genai.GenerativeModel('gemini-1.5-flash')
             
-            # Envia a foto junto com as instruções e mostra o resultado na tela
+            # Envia a foto junto com as instrucoes e mostra o resultado
             resposta = model.generate_content([instrucoes, imagem])
             st.success("Análise Concluída!")
             st.write(resposta.text)
